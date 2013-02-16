@@ -34,6 +34,14 @@ directory node[:torquebox][:dir] do
   action :create
 end
 
+directory node[:torquebox][:log_dir] do
+  owner "vagrant"
+  group "vagrant"
+  mode "0755"
+  action :create
+end
+
+
 ENV['TORQUEBOX_DIR'] = node[:torquebox][:dir]
 ENV['TORQUEBOX_HOME'] = node[:torquebox][:home]
 
@@ -60,9 +68,6 @@ bash "run_bundle_install" do
   cwd node[:torquebox][:app_dir]
   code <<-EOH
     $TORQUEBOX_HOME/jruby/bin/bundle install
-    RUBY_VERSION=$(ruby -v | awk '{print $2}'|sed s'/\.//g')
-    [[ $RUBY_VERSION -gt 187 ]] && [[ $RUBY_VERSION -lt 192 ]] && gem install \
-    $TORQUEBOX_HOME/jruby/bin/rdoc-data; rdoc-data --install
   EOH
 end
 
@@ -73,9 +78,18 @@ bash "torquebox_deploy" do
   EOH
 end
 
+template "torquebox.run.sh" do
+  path "#{node[:torquebox][:app_dir]}/run-app.sh"
+  source "torquebox.single.app-run.erb"
+  owner "vagrant"
+  group "vagrant"
+  mode "0755"
+end
+
 bash "torquebox_run" do
   cwd node[:torquebox][:app_dir]
   code <<-EOH
-    torquebox run -p 3000 -b 0.0.0.0 
+    /bin/bash run-app.sh 
   EOH
+  creates "#{node[:torquebox][:app_dir]}/run-app.sh"
 end
