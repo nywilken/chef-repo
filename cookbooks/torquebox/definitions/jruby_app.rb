@@ -23,11 +23,15 @@ define :jruby_app, :env => "development", :enable => true do
   application_dir  = params[:approot]
 
   if params[:enable]
+     execute "create development-db" do
+         command "su -l #{node[:torquebox][:user]} -c '#{node[:torquebox][:home]}/jruby/bin/rake db:migrate --rakefile=#{application_dir}/Rakefile'"
+    end
+
     execute "torquebox deploy #{application_name}" do
         command "su -l #{node[:torquebox][:user]} -c '#{node[:torquebox][:home]}/jruby/bin/bundle install --quiet --gemfile=#{application_dir}/Gemfile && #{node[:torquebox][:home]}/jruby/bin/torquebox deploy #{params[:approot]} --name=#{params[:name]} --env=#{params[:env]}'"  
     end
   else
-    execute "torquebox undeploy #{applcation_name}" do
+    execute "torquebox undeploy #{application_name}" do
         command "su -l #{node[:torquebox][:user]} -c '#{node[:torquebox][:home]}/jruby/bin/torquebox undeploy #{params[:approot]} --name=#{params[:name]}'" 
     end
     if ::File.exists?("#{node[:torquebox][:home]}/jboss/standalone/deployment/#{application_name}-knob.yml.undeployed")
