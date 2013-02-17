@@ -24,6 +24,10 @@ package "unzip" do
   action :install
 end
 
+package "vim" do
+  action :install
+end
+
 package "build-essential" do
   action :install
 end

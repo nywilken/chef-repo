@@ -24,8 +24,7 @@ define :jruby_app, :env => "development", :enable => true do
 
   if params[:enable]
     execute "torquebox deploy #{application_name}" do
-        command "su -l #{node[:torquebox][:user]} -c '#{node[:torquebox][:home]}/jruby/bin/bundle install --gemfile=#{application_dir}/Gemfile'"
-        command "su -l #{node[:torquebox][:user]} -c '#{node[:torquebox][:home]}/jruby/bin/torquebox deploy #{params[:approot]} --name=#{params[:name]} --env=#{params[:env]}'"  
+        command "su -l #{node[:torquebox][:user]} -c '#{node[:torquebox][:home]}/jruby/bin/bundle install --quiet --gemfile=#{application_dir}/Gemfile && #{node[:torquebox][:home]}/jruby/bin/torquebox deploy #{params[:approot]} --name=#{params[:name]} --env=#{params[:env]}'"  
     end
   else
     execute "torquebox undeploy #{applcation_name}" do
