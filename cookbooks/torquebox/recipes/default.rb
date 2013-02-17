@@ -53,7 +53,7 @@ bash "install_torquebox" do
     /bin/ln -s torquebox-2.3.0 $TORQUEBOX_HOME
     /bin/chown -R vagrant:vagrant $TORQUEBOX_DIR
   EOH
-  creates node[:torquebox][:home] 
+  creates "#{node[:torquebox][:home]}/jboss/bin/standalone.sh" 
 end
 
 template "torquebox.profile" do
@@ -76,20 +76,20 @@ bash "torquebox_deploy" do
   code <<-EOH
     torquebox deploy
   EOH
+  creates "#{node[:torquebox][:home]}/jboss/standalone/deployment/vagrant-knob.yml"
+  notifies :restart, resources(:service => "torquebox")
 end
 
-template "torquebox.run.sh" do
-  path "#{node[:torquebox][:app_dir]}/run-app.sh"
-  source "torquebox.single.app-run.erb"
-  owner "vagrant"
-  group "vagrant"
-  mode "0755"
+
+template "torquebox.upstart.conf" do
+  path "/etc/init/torquebox"
+  source "torquebox.upstart.conf.erb"
+  owner "root"
+  group "root"
+  mode "0644"
+  notifies :restart, resources(:service => "torquebox")
 end
 
-bash "torquebox_run" do
-  cwd node[:torquebox][:app_dir]
-  code <<-EOH
-    /bin/bash run-app.sh 
-  EOH
-  creates "#{node[:torquebox][:app_dir]}/run-app.sh"
+service "torquebox" do
+  action [:enable, :start]
 end

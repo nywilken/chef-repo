@@ -1,0 +1,11 @@
+author "Wilken Rivera"
+description "A simple upstart job managed by Chef that can be used for starting up TorqueBox"
+
+env BIND_ADDR=<%= node[:torquebox][:bind_addr] %>
+env DAEMONCMD="<%= node[:torquebox][:home] %>/jboss/bin/standalone.sh"
+
+start on started network-services 
+stop on stopping network-services
+expect fork
+
+exec $DAEMONCMD -b $BIND_ADDR >> /var/log/torquebox/torquebox-out.log
