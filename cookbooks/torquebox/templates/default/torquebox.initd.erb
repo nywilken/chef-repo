@@ -1,0 +1,52 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:        torquebox 
+# Required-Start:  $network $remote_fs
+# Required-Stop:   $network $remote_fs
+# Default-Start:   2 3 4 5
+# Default-Stop:    1
+# Short-Description: Start instance of TorqueBox
+### END INIT INFO
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+. /lib/lsb/init-functions
+
+DAEMON="<%= node[:torquebox][:home] %>/jboss/bin/standalone.sh"
+DAEMON_ARGS="-b <%= node[:torquebox][:bind_addr] %> >> <%= node[:torquebox][:log_dir] %>/lastlog 2>&1 &"
+DAEMON_SHUTDOWN="<%= node[:torquebox][:home] %>/jboss/bin/jboss-cli.sh --connect --command=:shutdown"
+
+test -x $DAEMON || exit 5
+
+RUNASUSER=<%= node[:torquebox][:user] %>
+UGID=$(getent passwd $RUNASUSER | cut -f 3,4 -d:) || true
+
+case $1 in
+	start)
+		log_daemon_msg "Starting TorqueBox server" "torquebox"
+		if [ -z "$UGID" ]; then
+			log_failure_msg "user \"$RUNASUSER\" does not exist"
+			exit 1
+		fi
+  		exec sudo -u $RUNASUSER sh -c "$DAEMON $DAEMON_ARGS"
+		status=$?
+		log_end_msg $status
+  		;;
+	stop)
+		log_daemon_msg "Stopping TorqueBox server" "torquebox"
+  		exec sudo -u $RUNASUSER sh -c "$DAEMON_SHUTDOWN"
+		log_end_msg $?
+		rm -f $PIDFILE
+  		;;
+	restart)
+		$0 stop && sleep 2 && $0 start
+  		;;
+	status)
+		status_of_proc $DAEMON "Torquebox server"
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|status}"
+		exit 2
+		;;
+esac

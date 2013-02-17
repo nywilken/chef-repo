@@ -29,21 +29,22 @@ package "build-essential" do
 end
 
 directory node[:torquebox][:dir] do
-  owner "vagrant"
+  owner node[:torquebox][:user]
   mode "0755"
   action :create
 end
 
 directory node[:torquebox][:log_dir] do
-  owner "vagrant"
-  group "vagrant"
+  owner node[:torquebox][:user]
+  group node[:torquebox][:user]
   mode "0755"
   action :create
 end
 
 
-ENV['TORQUEBOX_DIR'] = node[:torquebox][:dir]
-ENV['TORQUEBOX_HOME'] = node[:torquebox][:home]
+ENV['TORQUEBOX_DIR']   = node[:torquebox][:dir]
+ENV['TORQUEBOX_HOME']  = node[:torquebox][:home]
+ENV['TORQUEBOX_OWNER'] = node[:torquebox][:user]
 
 bash "install_torquebox" do
   cwd node[:torquebox][:dir]
@@ -51,7 +52,7 @@ bash "install_torquebox" do
     /usr/bin/wget -N http://torquebox.org/release/org/torquebox/torquebox-dist/2.3.0/torquebox-dist-2.3.0-bin.zip
     /usr/bin/unzip -q torquebox-dist-2.3.0-bin.zip 
     /bin/ln -s torquebox-2.3.0 $TORQUEBOX_HOME
-    /bin/chown -R vagrant:vagrant $TORQUEBOX_DIR
+    /bin/chown -R $TORQUEBOX_OWNER:$TORQUEBOX_OWNER $TORQUEBOX_DIR
   EOH
   creates "#{node[:torquebox][:home]}/jboss/bin/standalone.sh" 
 end
@@ -64,32 +65,30 @@ template "torquebox.profile" do
   mode "0644"
 end
 
-bash "run_bundle_install" do
-  cwd node[:torquebox][:app_dir]
-  code <<-EOH
-    $TORQUEBOX_HOME/jruby/bin/bundle install
-  EOH
-end
-
-bash "torquebox_deploy" do
-  cwd node[:torquebox][:app_dir]
-  code <<-EOH
-    torquebox deploy
-  EOH
-  creates "#{node[:torquebox][:home]}/jboss/standalone/deployment/vagrant-knob.yml"
-  notifies :restart, resources(:service => "torquebox")
-end
-
-
-template "torquebox.upstart.conf" do
-  path "/etc/init/torquebox"
-  source "torquebox.upstart.conf.erb"
-  owner "root"
-  group "root"
-  mode "0644"
-  notifies :restart, resources(:service => "torquebox")
+template "torquebox.standalone.xml" do
+  path "#{node[:torquebox][:home]}/jboss/standalone/configuration/standalone.xml"
+  source "standalone.xml.erb"
+  owner node[:torquebox][:user]
+  group node[:torquebox][:user]
+  mode "0664"
 end
 
 service "torquebox" do
-  action [:enable, :start]
+  supports :restart => true, :start => true, :stop => true
+  action :nothing
 end
+
+template "torquebox.initd" do
+  path "/etc/init.d/torquebox"
+  source "torquebox.initd.erb"
+  owner "root"
+  group "root"
+  mode "0755"
+  notifies :enable, resources(:service => "torquebox")
+  notifies :start, resources(:service => "torquebox")
+
+end
+
+#service "torquebox" do
+#  action [:enable, :start]
+#end
