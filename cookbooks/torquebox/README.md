@@ -11,10 +11,10 @@ Attributes
 - dir: install location for the torquebox binaries.
 - home: symlink name that will point to the torquebox binaries.
 - log_dir: directory for storing torquebox console logs
-- conf_dir: directory for setting torquebox ENV.vars (defaults /etc/profile.d). 
+- conf_dir: location of the login profile scripts (defaults /etc/profile.d). 
 - bind_addr: default interface which the torquebox instance will bind to (default 0.0.0.0).
-- bind_port: default port which the torquebox install will listen on
-- user: owner of the torquebox binaries; needed for deploying jruby_apps (default vagrant). 
+- bind_port: default port which the torquebox instance will listen on
+- user: owner of the torquebox binaries; also used for deploying jruby_apps (default vagrant). 
 
 
 Usage
