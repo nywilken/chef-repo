@@ -1,0 +1,7 @@
+
+export P4PORT=$(hostname):1666
+export P4USER=<%= node[:perforce][:user] %>
+export P4PASSWD=somepasswd
+export P4ROOT=<%= node[:perforce][:db_dir] %>
+export P4LOGS=<%= node[:perforce][:log_dir] %>
+export P4CONFIG=.p4config
